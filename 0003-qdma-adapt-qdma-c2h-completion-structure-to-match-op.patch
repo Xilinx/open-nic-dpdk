@@ -1,0 +1,136 @@
+# BSD License
+#
+# OpenNIC patch for Xilinx DMA IP software
+#
+# Copyright (c) 2016-2022 Xilinx, Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name Xilinx nor the names of its contributors may be used to
+#   endorse or promote products derived from this software without specific
+#   prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#----------------------------------------------------------------------------------
+
+# Modified C2H completion structure to match OpenNIC shell.
+
+diff --git a/QDMA/DPDK/drivers/net/qdma/qdma_rxtx.c b/QDMA/DPDK/drivers/net/qdma/qdma_rxtx.c
+index 46d650d..e7b6ef9 100644
+--- a/QDMA/DPDK/drivers/net/qdma/qdma_rxtx.c
++++ b/QDMA/DPDK/drivers/net/qdma/qdma_rxtx.c
+@@ -55,8 +55,6 @@ static int qdma_ul_extract_st_cmpt_info_v(void *ul_cmpt_entry, void *cmpt_info)
+ 	cmpt_data = (union qdma_ul_st_cmpt_ring *)(cmpt_info);
+ 
+ 	cmpt_data->data = cmpt_desc->data;
+-	if (unlikely(!cmpt_desc->desc_used))
+-		cmpt_data->length = 0;
+ 
+ 	return 0;
+ }
+diff --git a/QDMA/DPDK/drivers/net/qdma/qdma_user.c b/QDMA/DPDK/drivers/net/qdma/qdma_user.c
+index a176536..b5580b0 100644
+--- a/QDMA/DPDK/drivers/net/qdma/qdma_user.c
++++ b/QDMA/DPDK/drivers/net/qdma/qdma_user.c
+@@ -58,12 +58,10 @@ int qdma_ul_extract_st_cmpt_info(void *ul_cmpt_entry, void *cmpt_info)
+ 	cmpt_desc = (union qdma_ul_st_cmpt_ring *)(ul_cmpt_entry);
+ 	cmpt_data = (union qdma_ul_st_cmpt_ring *)(cmpt_info);
+ 
+-	if (unlikely(cmpt_desc->err || cmpt_desc->data_frmt))
++	if (unlikely(cmpt_desc->err))
+ 		return -1;
+ 
+ 	cmpt_data->data = cmpt_desc->data;
+-	if (unlikely(!cmpt_desc->desc_used))
+-		cmpt_data->length = 0;
+ 
+ 	return 0;
+ }
+@@ -79,7 +77,7 @@ int qdma_ul_extract_st_cmpt_info(void *ul_cmpt_entry, void *cmpt_info)
+  */
+ uint16_t qdma_ul_get_cmpt_pkt_len(void *ul_cmpt_entry)
+ {
+-	return ((union qdma_ul_st_cmpt_ring *)ul_cmpt_entry)->length;
++	return ((union qdma_ul_st_cmpt_ring *)ul_cmpt_entry)->pkt_len;
+ }
+ 
+ /**
+@@ -279,7 +277,7 @@ int qdma_ul_process_immediate_data(void *cmpt_entry, uint16_t cmpt_desc_len,
+ 	struct qdma_ul_cmpt_ring *cmpt_desc =
+ 			(struct qdma_ul_cmpt_ring *)(cmpt_entry);
+ 
+-	if (unlikely(cmpt_desc->err || cmpt_desc->data_frmt))
++	if (unlikely(cmpt_desc->err))
+ 		return -1;
+ 
+ 	cmpt_buff_ptr = (char *)cmpt_buff;
+diff --git a/QDMA/DPDK/drivers/net/qdma/qdma_user.h b/QDMA/DPDK/drivers/net/qdma/qdma_user.h
+index d0dcf1e..1182eb9 100644
+--- a/QDMA/DPDK/drivers/net/qdma/qdma_user.h
++++ b/QDMA/DPDK/drivers/net/qdma/qdma_user.h
+@@ -48,40 +48,15 @@
+   * This structure is specific for the example design.
+   * Processing of this ring happens in qdma_rxtx.c.
+   */
+-union qdma_ul_st_cmpt_ring {
++union __attribute__ ((packed)) qdma_ul_st_cmpt_ring {
+ 	volatile uint64_t data;
+-	struct {
+-		/* For 2018.2 IP, this field determines the
+-		 * Standard or User format of completion entry
+-		 */
+-		volatile uint32_t	data_frmt:1;
+-
+-		/* This field inverts every time PIDX wraps
+-		 * the completion ring
+-		 */
+-		volatile uint32_t	color:1;
+-
+-		/* Indicates that C2H engine encountered
+-		 * a descriptor error
+-		 */
+-		volatile uint32_t	err:1;
+-
+-		/* Indicates that the completion packet
+-		 * consumes descriptor in C2H ring
+-		 */
+-		volatile uint32_t	desc_used:1;
+-
+-		/* Indicates length of the data packet */
+-		volatile uint32_t	length:16;
+-
+-		/* Reserved field */
+-		volatile uint32_t	user_rsv:4;
+-
+-		/* User logic defined data of
+-		 * length based on CMPT entry
+-		 * length
+-		 */
+-		volatile uint8_t	user_def[];
++        struct __attribute__ ((packed)) {
++		volatile uint32_t rsvd:1;
++		volatile uint32_t color:1;
++		volatile uint32_t err:1;
++		volatile uint32_t rsvd2:29;
++		volatile uint32_t pkt_len:16;
++		volatile uint32_t pkt_id:16;
+ 	};
+ };
+ 

@@ -1,0 +1,105 @@
+# BSD License
+#
+# OpenNIC patch for Xilinx DMA IP software
+#
+# Copyright (c) 2016-2022 Xilinx, Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name Xilinx nor the names of its contributors may be used to
+#   endorse or promote products derived from this software without specific
+#   prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#----------------------------------------------------------------------------------
+
+# Modify QDMA H2H descriptor to match open-nic-shell.
+
+diff --git a/QDMA/DPDK/drivers/net/qdma/qdma_user.c b/QDMA/DPDK/drivers/net/qdma/qdma_user.c
+index b5580b0..bd10a68 100644
+--- a/QDMA/DPDK/drivers/net/qdma/qdma_user.c
++++ b/QDMA/DPDK/drivers/net/qdma/qdma_user.c
+@@ -169,34 +169,12 @@ int qdma_ul_update_st_h2c_desc(void *qhndl, uint64_t q_offloads,
+ {
+ 	(void)q_offloads;
+ 	struct qdma_ul_st_h2c_desc *desc_info;
+-	int nsegs = mb->nb_segs;
+-	int pkt_segs = nsegs;
+ 
+-	if (nsegs == 1) {
+-		desc_info = get_st_h2c_desc(qhndl);
+-		desc_info->len = rte_pktmbuf_data_len(mb);
+-		desc_info->pld_len = desc_info->len;
+-		desc_info->src_addr = mb->buf_iova + mb->data_off;
+-		desc_info->flags = (S_H2C_DESC_F_SOP | S_H2C_DESC_F_EOP);
+-		desc_info->cdh_flags = 0;
+-	} else {
+-		while (nsegs && mb) {
+-			desc_info = get_st_h2c_desc(qhndl);
+-
+-			desc_info->len = rte_pktmbuf_data_len(mb);
+-			desc_info->pld_len = desc_info->len;
+-			desc_info->src_addr = mb->buf_iova + mb->data_off;
+-			desc_info->flags = 0;
+-			if (nsegs == pkt_segs)
+-				desc_info->flags |= S_H2C_DESC_F_SOP;
+-			if (nsegs == 1)
+-				desc_info->flags |= S_H2C_DESC_F_EOP;
+-			desc_info->cdh_flags = 0;
++	desc_info = get_st_h2c_desc(qhndl);
++	desc_info->len = rte_pktmbuf_data_len(mb);
++	desc_info->meta_pkt_len = desc_info->len;
++	desc_info->src_addr = mb->buf_iova + mb->data_off;
+ 
+-			nsegs--;
+-			mb = mb->next;
+-		}
+-	}
+ 	return 0;
+ }
+ 
+diff --git a/QDMA/DPDK/drivers/net/qdma/qdma_user.h b/QDMA/DPDK/drivers/net/qdma/qdma_user.h
+index 1182eb9..febd351 100644
+--- a/QDMA/DPDK/drivers/net/qdma/qdma_user.h
++++ b/QDMA/DPDK/drivers/net/qdma/qdma_user.h
+@@ -93,9 +93,6 @@ struct __attribute__ ((packed)) qdma_ul_st_c2h_desc
+ 	uint64_t	dst_addr;
+ };
+ 
+-#define S_H2C_DESC_F_SOP		1
+-#define S_H2C_DESC_F_EOP		2
+-
+ /* pld_len and flags members are part of custom descriptor format needed
+  * by example design for ST loopback and desc bypass
+  */
+@@ -103,10 +100,10 @@ struct __attribute__ ((packed)) qdma_ul_st_c2h_desc
+ /** ST H2C Descriptor **/
+ struct __attribute__ ((packed)) qdma_ul_st_h2c_desc
+ {
+-	volatile uint16_t	cdh_flags;
+-	volatile uint16_t	pld_len;
++	volatile uint16_t	meta_pkt_len;
++	volatile uint16_t	meta_unused;
+ 	volatile uint16_t	len;
+-	volatile uint16_t	flags;
++	volatile uint16_t	rsvd;
+ 	volatile uint64_t	src_addr;
+ };
+ 
