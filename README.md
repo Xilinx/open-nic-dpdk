@@ -1,4 +1,4 @@
-## Instructions for Getting DPDK Drivers Up and Running on OpenNIC 
+## Instructions for Getting DPDK Drivers Up and Running on AMD OpenNIC 
 
 This repo contains a series of patch files and instructions with details for building DPDK with drivers for [OpenNIC](https://github.com/Xilinx/open-nic).  The basic sections are:
 
