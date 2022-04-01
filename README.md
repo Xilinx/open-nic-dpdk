@@ -5,7 +5,7 @@ This is one of the three components of the
 - [OpenNIC shell](https://github.com/Xilinx/open-nic-shell.git) and
 - [OpenNIC driver](https://github.com/Xilinx/open-nic-driver.git).
 
-This repo contains a series of patch files and instructions with details for building DPDK with drivers for [OpenNIC](https://github.com/Xilinx/open-nic).  The basic sections are:
+This OpenNIC DPDK repo contains a series of patch files and instructions with details for building DPDK with drivers for [OpenNIC](https://github.com/Xilinx/open-nic).  The basic sections are:
 
 1. Install Build Dependencies.
 1. The drivers at [Xilinx QDMA's DPDK driver repo](https://github.com/Xilinx/dma_ip_drivers) need to be patched for OpenNIC using the patch files contained in this repo.
