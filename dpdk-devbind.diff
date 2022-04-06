@@ -1,0 +1,9 @@
+31a32,35
+> 
+> qdma = {'Class': '05', 'Vendor': '10ee', 'Device': '903f,913f',
+>               'SVendor': None, 'SDevice': None}
+> 
+62c66
+< network_devices = [network_class, cavium_pkx, avp_vnic, ifpga_class]
+---
+> network_devices = [network_class, cavium_pkx, avp_vnic, ifpga_class, qdma]
