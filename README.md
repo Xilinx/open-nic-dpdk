@@ -233,12 +233,26 @@ The rest of this document contains the step-by-step instructions for each of the
     ```
 ### Section 8: Binding DPDK and Testing by Running pktgen
 
-1.  Load dpdk-devbind.py with arguments for vfio and the two pcie bus and device identifiers:  
+1.  Edit dpdk-devbind.py so that it can find the qdma PCIe class/vendor/device, for example like below.  
+        (The file dpdk-devbind.diff in this repo also contains these same lines from diff.)
+    ```
+    31a32,35
+    >
+    > qdma = {'Class': '05', 'Vendor': '10ee', 'Device': '903f,913f',
+    >               'SVendor': None, 'SDevice': None}
+    >
+    62c66
+    < network_devices = [network_class, cavium_pkx, avp_vnic, ifpga_class]
+    ---
+    > network_devices = [network_class, cavium_pkx, avp_vnic, ifpga_class, qdma]
+    ```
+
+2.  Load dpdk-devbind.py with arguments for vfio and the two pcie bus and device identifiers:  
     ```
     sudo dpdk_patched/dpdk-20.11/usertools/dpdk-devbind.py -b vfio-pci \
 	08:00.0 08:00.1
     ```
-2.  Test by running pktgen-dpdk (note the command below specifies example device IDs
+3.  Test by running pktgen-dpdk (note the command below specifies example device IDs
         and bus IDs for the two PFs, please substitute with the appropriate IDs):
     ```
     sudo dpdk_patched/pktgen-dpdk/usr/local/bin/pktgen -a 08:00.0 -a 08:00.1 \
