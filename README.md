@@ -48,6 +48,9 @@ The rest of this document contains the step-by-step instructions for each of the
 1.  This repo contains several patch files that must be applied to the [Xilinx QDMA DPDK drivers](https://github.com/Xilinx/dma_ip_drivers.git).
     ```
     git clone https://github.com/Xilinx/dma_ip_drivers.git
+    cd dma_ip_drivers
+    git checkout 7859957
+    cd ..
     ```
 
 1.  Clone this open-nic-dpdk repo:
