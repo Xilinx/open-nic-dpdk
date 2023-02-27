@@ -66,7 +66,6 @@ The rest of this document contains the step-by-step instructions for each of the
 1.  Then apply the OpenNIC patches:
     ```
     cd dma_ip_drivers
-    git checkout -tb adapt-to-onic
     git apply *.patch
     cd ..
     ```
