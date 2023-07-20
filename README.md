@@ -240,7 +240,7 @@ The rest of this document contains the step-by-step instructions for each of the
     ```
     31a32,35
     >
-    > qdma = {'Class': '05', 'Vendor': '10ee', 'Device': '903f,913f',
+    > qdma = {'Class: '02', 'Vendor': '10ee', 'Device': '903f,913f',
     >               'SVendor': None, 'SDevice': None}
     >
     62c66
